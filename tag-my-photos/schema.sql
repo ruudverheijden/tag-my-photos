@@ -1,0 +1,23 @@
+DROP TABLE IF EXISTS photo;
+DROP TABLE IF EXISTS person;
+DROP TABLE IF EXISTS face;
+
+CREATE TABLE photo (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  file_name TEXT NOT NULL,
+  file_extension TEXT NOT NULL,
+  file_hash TEXT NOT NULL
+);
+
+CREATE TABLE person (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL
+);
+
+CREATE TABLE face (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  photo_id INTEGER NOT NULL,
+  person_id INTEGER NULL,
+  FOREIGN KEY (photo_id) REFERENCES photo (id),
+  FOREIGN KEY (person_id) REFERENCES person (id)
+);
