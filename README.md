@@ -13,7 +13,32 @@ Designed to run in parallel to other Photo Management tools (like Synology Photo
 
 # Architecture
 - Python based, since Python offers a wide variety of AI / Face Recognition tools
-- Using FastAPI for providing API support with async features
-- SQLite database as it's simple and lightweight
+- Using Prefect to run the data pipeline that outputs to a database
+- Custom UI with FastAPI that interacts with the database to manually label recognized faces
 - DeepFace for face recognition
 - Containerize the whole application inside a single Docker container
+
+# Data Processing Pipeline Overview
+1. Detect new files on mounted volume
+2. Store file metadata + hash in database
+3. Detect Faces + create thumbnail of face area
+5. Create Face Embeddings
+6. Calculate distance of new faces to known clusters
+7. Display newly found faces in GUI
+8. User manually accepts or rejects matches
+9. User manually bulk updates file metadata
+
+# TODO
+- Create Prefect flow and task for reading photos
+- Create task for parsing photo metadata
+- Create thumbnails
+- Create Dockerfile containing
+
+
+# Development
+
+To build the Docker image:
+`docker build . -t ruudv/tag-my-photos`
+
+Then run the container using:
+`docker container run -p 4200:4200 -v ~/Desktop/photos:/photolibrary ruudv/tag-my-photos`
