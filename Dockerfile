@@ -5,6 +5,10 @@ FROM prefecthq/prefect:2.15.0-python3.11
 VOLUME [ "/data" ]
 VOLUME [ "/photolibrary" ]
 
+# Set environment variables
+ENV DATA_PATH="/data"
+ENV LIBRARY_PATH="/photolibrary"
+
 # Expose port 4200 used by Prefect
 EXPOSE 4200
 
