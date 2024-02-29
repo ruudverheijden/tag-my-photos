@@ -50,4 +50,4 @@ Designed to run in parallel to other Photo Management tools (like Synology Photo
     LIBRARY_PATH="/path/to/your/photolibrary"
     ```
 
-2. Run `python main.py`
+2. Run `prefect server start` to start the Prefect Local Server running at http://127.0.0.1:4200
