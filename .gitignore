@@ -1,3 +1,11 @@
+# Project directories meant for local development
+data/*
+photolibrary/*
+
+# Keep directories with a .gitkeep file
+# This requires to ignore content but not the directory itself using: /path/to/dir/*
+!/**/.gitkeep
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

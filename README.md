@@ -37,8 +37,17 @@ Designed to run in parallel to other Photo Management tools (like Synology Photo
 
 # Development
 
-To build the Docker image:
+1. To build the Docker image:
 `docker build . -t ruudv/tag-my-photos`
 
-Then run the container using:
-`docker container run -p 4200:4200 -v ~/Desktop/photos:/photolibrary ruudv/tag-my-photos`
+2. Place some photos in the 'photolibrary' folder of this project and run the container using:
+`docker container run -p 4200:4200 -v ./photolibrary:/photolibrary ./data:/data ruudv/tag-my-photos`
+
+## Run without Docker
+1. Create a `.env` file containing:
+    ```text
+    DATA_PATH="/path/to/your/data/directory"
+    LIBRARY_PATH="/path/to/your/photolibrary"
+    ```
+
+2. Run `python main.py`
