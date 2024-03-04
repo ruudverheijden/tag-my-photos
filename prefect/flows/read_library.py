@@ -39,6 +39,17 @@ def calculate_file_hash(filepath: str) -> str:
         file_hash = hashlib.sha256(file.read()).hexdigest()
     return file_hash
 
+@task()
+def store_metadata(filepath: str, hash: str, last_updated: float) -> str:
+    """
+    Store the file metadata in the database
+    """
+    with SqlAlchemyConnector.load("database") as connector:
+        connector.execute(
+            "INSERT INTO files (path, hash, last_updated) VALUES (:path, :hash, :last_updated);",
+            parameters={"path": filepath, "hash": hash, "last_updated": last_updated},
+        )
+
 @flow(log_prints=True)
 def parse_modified_files():
     """
@@ -46,15 +57,17 @@ def parse_modified_files():
     """
     filepaths = list_all_supported_filepaths(os.environ["LIBRARY_PATH"], SUPPORTED_FILE_EXTENSIONS)
     
-    with SqlAlchemyConnector.load("Database") as connector:
-        connector.execute(
-            "CREATE TABLE IF NOT EXISTS files (path varchar, hash varchar);"
-        )
-    
     for filepath in filepaths:
-        hash = calculate_file_hash(filepath)
-        print(os.path.getmtime(filepath))
-        print(filepath)
+        store_metadata(filepath, calculate_file_hash(filepath), os.path.getmtime(filepath))
+            
+    with SqlAlchemyConnector.load("database") as connector:
+        while True:
+            # Repeated fetch* calls using the same operation will
+            # skip re-executing and instead return the next set of results
+            new_rows = connector.fetch_many("SELECT * FROM files")
+            if len(new_rows) == 0:
+                break
+            print(new_rows)
 
 if __name__ == "__main__":
     parse_modified_files()
