@@ -46,6 +46,11 @@ def parse_modified_files():
     """
     filepaths = list_all_supported_filepaths(os.environ["LIBRARY_PATH"], SUPPORTED_FILE_EXTENSIONS)
     
+    with SqlAlchemyConnector.load("Database") as connector:
+        connector.execute(
+            "CREATE TABLE IF NOT EXISTS files (path varchar, hash varchar);"
+        )
+    
     for filepath in filepaths:
         hash = calculate_file_hash(filepath)
         print(os.path.getmtime(filepath))
