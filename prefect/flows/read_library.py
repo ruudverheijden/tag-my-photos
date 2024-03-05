@@ -33,11 +33,18 @@ def list_all_supported_filepaths(library_path: str, supported_extensions: list[s
 @task()
 def calculate_file_hash(filepath: str) -> str:
     """
-    Calculate the SHA-256 hash of a file
+    Calculate the SHA-256 hash of a file block by block to support large files
     """
-    with open(filepath, 'rb') as file:
-        file_hash = hashlib.sha256(file.read()).hexdigest()
-    return file_hash
+    BLOCK_SIZE = 65536 # The size of each read from the file
+    
+    file_hash = hashlib.sha256() # Create the hash object
+    with open(filepath, 'rb') as f:
+        fb = f.read(BLOCK_SIZE)
+        while len(fb) > 0:
+            file_hash.update(fb) # Update the hash
+            fb = f.read(BLOCK_SIZE) # Read the next block from the file
+    
+    return file_hash.hexdigest() # Return the hexadecimal digest of the hash
 
 @task()
 def store_metadata(filepath: str, hash: str, last_updated: float) -> str:
