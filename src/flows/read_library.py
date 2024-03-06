@@ -1,8 +1,10 @@
 from prefect import flow, task
-from prefect_sqlalchemy import SqlAlchemyConnector
+from sqlalchemy import create_engine, Engine, insert
 from dotenv import load_dotenv
+from datetime import datetime
 import os
 import hashlib
+from ..utils.tables import files as files_table
 
 load_dotenv()  # Inject environment variables from .env during development
 
@@ -47,15 +49,15 @@ def calculate_file_hash(filepath: str) -> str:
     return file_hash.hexdigest() # Return the hexadecimal digest of the hash
 
 @task()
-def store_metadata(filepath: str, hash: str, last_updated: float) -> str:
+def store_metadata(db_engine: Engine, filepath: str, hash: str, last_updated: float) -> str:
     """
     Store the file metadata in the database
     """
-    with SqlAlchemyConnector.load("database") as connector:
-        connector.execute(
-            "INSERT INTO files (path, hash, last_updated) VALUES (:path, :hash, :last_updated);",
-            parameters={"path": filepath, "hash": hash, "last_updated": last_updated},
-        )
+    with db_engine.connect() as conn:
+        result = conn.execute(
+            insert(files_table).values(path=filepath, hash=hash, last_updated=last_updated)
+            )
+        conn.commit()
 
 @flow(log_prints=True)
 def parse_modified_files():
@@ -64,17 +66,10 @@ def parse_modified_files():
     """
     filepaths = list_all_supported_filepaths(os.environ["LIBRARY_PATH"], SUPPORTED_FILE_EXTENSIONS)
     
+    db_engine = create_engine('sqlite:///' + os.environ["DATABASE_PATH"], echo=True)
+    
     for filepath in filepaths:
-        store_metadata(filepath, calculate_file_hash(filepath), os.path.getmtime(filepath))
-            
-    with SqlAlchemyConnector.load("database") as connector:
-        while True:
-            # Repeated fetch* calls using the same operation will
-            # skip re-executing and instead return the next set of results
-            new_rows = connector.fetch_many("SELECT * FROM files")
-            if len(new_rows) == 0:
-                break
-            print(new_rows)
+        store_metadata(db_engine, filepath, calculate_file_hash(filepath), datetime.fromtimestamp(os.path.getmtime(filepath)))
 
 if __name__ == "__main__":
     parse_modified_files()

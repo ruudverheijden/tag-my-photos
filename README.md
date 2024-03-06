@@ -48,6 +48,9 @@ Designed to run in parallel to other Photo Management tools (like Synology Photo
     ```text
     DATA_PATH="/path/to/your/data/directory"
     LIBRARY_PATH="/path/to/your/photolibrary"
+    DATABASE_PATH="${DATA_PATH}/tag-my-photos.db"
     ```
 
 2. Run `prefect server start` to start the Prefect Local Server running at http://127.0.0.1:4200
+
+3. To run a specific Python script from the root directory use e.g. `python -m src.flows.initialize_database`
