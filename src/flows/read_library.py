@@ -8,7 +8,7 @@ from ..utils.tables import files as files_table
 
 load_dotenv()  # Inject environment variables from .env during development
 
-SUPPORTED_FILE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.heic']
+SUPPORTED_FILE_EXTENSIONS = ['.jpg', '.jpeg', '.png'] # TODO: add support for HEIC files later
 
 @task()
 def list_all_supported_filepaths(library_path: str, supported_extensions: list[str]) -> list[str]:
@@ -54,10 +54,17 @@ def store_metadata(db_engine: Engine, filepath: str, hash: str, last_updated: fl
     Store the file metadata in the database
     """
     with db_engine.connect() as conn:
-        result = conn.execute(
-            insert(files_table).values(path=filepath, hash=hash, last_updated=last_updated)
-            )
-        conn.commit()
+        # Check if the file already exists in the database
+        exists = conn.execute(files_table.select().where(files_table.c.path == filepath)).fetchone()
+        
+        if not exists:
+            try:
+                conn.execute(
+                    insert(files_table).values(path=filepath, hash=hash, last_updated=last_updated)
+                )
+                conn.commit()
+            except Exception as e:
+                print(f"Error storing metadata for file {filepath}: {e}")
 
 @flow(log_prints=True)
 def parse_modified_files():
@@ -66,7 +73,7 @@ def parse_modified_files():
     """
     filepaths = list_all_supported_filepaths(os.environ["LIBRARY_PATH"], SUPPORTED_FILE_EXTENSIONS)
     
-    db_engine = create_engine('sqlite:///' + os.environ["DATABASE_PATH"], echo=True)
+    db_engine = create_engine('sqlite:///' + os.environ["DATABASE_PATH"])
     
     for filepath in filepaths:
         store_metadata(db_engine, filepath, calculate_file_hash(filepath), datetime.fromtimestamp(os.path.getmtime(filepath)))
