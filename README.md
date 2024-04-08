@@ -49,6 +49,7 @@ Designed to run in parallel to other Photo Management tools (like Synology Photo
     DATA_PATH="/path/to/your/data/directory"
     LIBRARY_PATH="/path/to/your/photolibrary"
     DATABASE_PATH="${DATA_PATH}/tag-my-photos.db"
+    THUMBNAIL_PATH="${DATA_PATH}/thumbnails"
     ```
 
 2. Run `prefect server start` to start the Prefect Local Server running at http://127.0.0.1:4200
