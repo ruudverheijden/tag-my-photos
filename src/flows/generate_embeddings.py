@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from deepface import DeepFace
 import os
 import faiss
+import numpy as np
 from ..utils.tables import files as files_table, faces as faces_table
 
 load_dotenv()  # Inject environment variables from .env during development
@@ -34,7 +35,6 @@ def generate_embeddings():
             print(row)
             try:
                 faces = generate_embeddings_from_file(row.path, FACE_RECOGNITION_MODEL, FACE_DETECTION_MODEL)
-                print(faces)
                 
                 face_found = len(faces) > 0
                 
@@ -51,9 +51,12 @@ def generate_embeddings():
                         conn.commit()
                         
                         # Store face embedding in Faiss
-                        index.add_with_ids(face['embedding'], [result.inserted_primary_key[0]])
+                        embedding = np.array([face['embedding']]).astype(np.float32)
+                        index.add_with_ids(embedding, [result.inserted_primary_key[0]])
             except Exception as e:
                 print(f"An error occurred: {e}")
+    
+    print(index.ntotal, index.d, index.is_trained)
     
     # Store index to disk
     faiss.write_index(index, os.environ["EMBEDDINGS_INDEX_PATH"])
