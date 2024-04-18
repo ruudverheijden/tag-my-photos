@@ -46,7 +46,15 @@ def generate_embeddings():
                 if face_found:
                     for face in faces:
                         # Store face metadata in the SQL database
-                        insert_face_statement = insert(faces_table).values(file_id=row.id, confidence=face['face_confidence'])
+                        insert_face_statement = insert(faces_table).values(
+                            file_id=row.id,
+                            confidence=face['face_confidence'],
+                            embedding=np.array([face['embedding']]).astype(np.float32).tobytes(),
+                            facial_area_top=face['facial_area']['x'],
+                            facial_area_left=face['facial_area']['y'],
+                            facial_area_width=face['facial_area']['w'],
+                            facial_area_height=face['facial_area']['h']
+                        )
                         result = conn.execute(insert_face_statement)
                         conn.commit()
                         

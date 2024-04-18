@@ -7,7 +7,7 @@ load_dotenv()  # Inject environment variables from .env during development
 @flow()
 def cleanup():
     """
-    Remove all generated files and data
+    Remove all generated files
     """
     os.remove(os.environ["DATABASE_PATH"])
     os.remove(os.environ["EMBEDDINGS_INDEX_PATH"])
