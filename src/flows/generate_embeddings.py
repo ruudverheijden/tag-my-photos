@@ -3,6 +3,7 @@ from sqlalchemy import create_engine, select, insert, update
 from dotenv import load_dotenv
 from deepface import DeepFace
 import os
+import faiss
 from ..utils.tables import files as files_table, faces as faces_table
 
 load_dotenv()  # Inject environment variables from .env during development
@@ -24,8 +25,10 @@ def generate_embeddings():
     Generate face embeddings for all new or modified files within the database
     """
     db_engine = create_engine('sqlite:///' + os.environ["DATABASE_PATH"])
+    index = faiss.read_index(os.environ["EMBEDDINGS_INDEX_PATH"])
     
     with db_engine.connect() as conn:
+    
         statement = select(files_table).where(files_table.c.contains_face == None).limit(3)
         for row in conn.execute(statement):
             print(row)
@@ -38,15 +41,22 @@ def generate_embeddings():
                 # Update that we found at least one face in the file
                 update_file_statement = update(files_table).where(files_table.c.id == row.id).values(contains_face=True)
                 conn.execute(update_file_statement)
+                conn.commit()
                 
                 if face_found:
-                    # Store faces in the database
                     for face in faces:
-                        insert_face_statement = insert(faces_table).values(file_id=row.id, confidence=face['face_confidence'].toFloat())
-                        # TODO: store embedding via SQLite VSS plugin
-                        conn.execute(insert_face_statement)
+                        # Store face metadata in the SQL database
+                        insert_face_statement = insert(faces_table).values(file_id=row.id, confidence=face['face_confidence'])
+                        result = conn.execute(insert_face_statement)
+                        conn.commit()
+                        
+                        # Store face embedding in Faiss
+                        index.add_with_ids(face['embedding'], [result.inserted_primary_key[0]])
             except Exception as e:
                 print(f"An error occurred: {e}")
+    
+    # Store index to disk
+    faiss.write_index(index, os.environ["EMBEDDINGS_INDEX_PATH"])
     
 if __name__ == "__main__":
     generate_embeddings()

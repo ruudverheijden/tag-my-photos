@@ -17,7 +17,6 @@ faces = Table(
     Column('file_id', ForeignKey('files.id'), nullable=False),
     Column('person_id', ForeignKey('persons.id')),
     Column('thumbnail_path', String),
-    Column('embedding', LargeBinary, nullable=False),
     Column('confidence', Float, nullable=False)
 )
 
