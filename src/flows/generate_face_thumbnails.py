@@ -10,7 +10,7 @@ load_dotenv()  # Inject environment variables from .env during development
 MAX_FACE_THUMBNAIL_SIZE = (500, 500)
 
 @task()
-def generate_thumbnail(target_path: str, file_path: str, file_postfix: str, face_left: int, face_top: int, face_width: int, face_height: int):
+def generate_thumbnail(target_path: str, file_path: str, file_postfix: str, face_left: int, face_top: int, face_width: int, face_height: int) -> str:
     """
     Create a thumbnail of the face area of an image    
     """
@@ -60,10 +60,11 @@ def generate_face_thumbnails():
         for row in conn.execute(statement):
             print("test", row.path, row.id, row.facial_area_left, row.facial_area_top, row.facial_area_width, row.facial_area_height)
             
-            generate_thumbnail(os.environ["THUMBNAILS_PATH"], row.path, '-' + str(row.id), row.facial_area_left, row.facial_area_top, row.facial_area_width, row.facial_area_height)
+            thumbnail_path = generate_thumbnail(os.environ["THUMBNAILS_PATH"], row.path, '-' + str(row.id), row.facial_area_left, row.facial_area_top, row.facial_area_width, row.facial_area_height)
             
-    # face['thumbnail_path'] = create_face_thumbnail(file['path'], index, face['area']['x'], face['area']['y'], face['area']['w'], face['area']['h'])
-            
+            update_statement = faces_table.update().where(faces_table.c.id == row.id).values(thumbnail_path=thumbnail_path)
+            conn.execute(update_statement)
+            conn.commit()
 
 if __name__ == "__main__":
     generate_face_thumbnails()
