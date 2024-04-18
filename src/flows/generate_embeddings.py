@@ -20,7 +20,7 @@ def generate_embeddings_from_file(filepath: str, face_recognition_model: str, fa
     return DeepFace.represent(img_path=filepath, enforce_detection=False, model_name = face_recognition_model, detector_backend = face_detection_model)
 
 
-@flow(log_prints=True)
+@flow()
 def generate_embeddings():
     """
     Generate face embeddings for all new or modified files within the database
@@ -30,9 +30,8 @@ def generate_embeddings():
     
     with db_engine.connect() as conn:
     
-        statement = select(files_table).where(files_table.c.contains_face == None).limit(3)
+        statement = select(files_table).where(files_table.c.contains_face == None)
         for row in conn.execute(statement):
-            print(row)
             try:
                 faces = generate_embeddings_from_file(row.path, FACE_RECOGNITION_MODEL, FACE_DETECTION_MODEL)
                 
@@ -50,8 +49,8 @@ def generate_embeddings():
                             file_id=row.id,
                             confidence=face['face_confidence'],
                             embedding=np.array([face['embedding']]).astype(np.float32).tobytes(),
-                            facial_area_top=face['facial_area']['x'],
-                            facial_area_left=face['facial_area']['y'],
+                            facial_area_left=face['facial_area']['x'],
+                            facial_area_top=face['facial_area']['y'],
                             facial_area_width=face['facial_area']['w'],
                             facial_area_height=face['facial_area']['h']
                         )
@@ -63,8 +62,6 @@ def generate_embeddings():
                         index.add_with_ids(embedding, [result.inserted_primary_key[0]])
             except Exception as e:
                 print(f"An error occurred: {e}")
-    
-    print(index.ntotal, index.d, index.is_trained)
     
     # Store index to disk
     faiss.write_index(index, os.environ["EMBEDDINGS_INDEX_PATH"])
