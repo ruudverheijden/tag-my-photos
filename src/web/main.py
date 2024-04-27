@@ -21,7 +21,7 @@ def faces():
     with db_engine.connect() as conn:
         query = select(faces_table.c.id, faces_table.c.thumbnail_path)
         result = conn.execute(query)
-        thumbnails = [{'thumbnail_path': row[1], 'id': row[0]} for row in result]
+        thumbnails = [{'thumbnail_path': os.environ["THUMBNAILS_PATH"] + "/" + row[1], 'id': row[0]} for row in result]
         conn.close()
     return render_template('faces_overview.html', thumbnails=thumbnails)
 
