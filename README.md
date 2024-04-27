@@ -55,6 +55,6 @@ Designed to run in parallel to other Photo Management tools (like Synology Photo
 
 2. Run `prefect server start` to start the Prefect Local Server running at http://127.0.0.1:4200
 
-3. To run a specific Python script from the root directory use e.g. `python -m src.flows.initialize_database`
+3. To run a specific Python script from the root directory use e.g. `python -m src.flows.initialize_database` or run the whole pipeline at once with `python -m src.flows.main`
 
 4. Run the web interface via `flask --app src.web.main run` and browse to `http://127.0.0.1:5000`
