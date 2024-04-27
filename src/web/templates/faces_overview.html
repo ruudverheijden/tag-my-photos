@@ -3,12 +3,17 @@
 {% block content %}
   <div class="container">
     {% for thumbnail in thumbnails %}
-      <div class="row">
-          <div class="col">
-            <img src="{{ thumbnail.thumbnail_path }}" class="img-thumbnail">
-          </div>
+      {% if loop.index0 % 6 == 0 %}
+        <div class="row">
+      {% endif %}
+      <div class="col">
+        <img src="{{ thumbnail.thumbnail_path }}" class="img-thumbnail">
       </div>
+      {% if loop.index % 6 == 0 or loop.last %}
+        </div>
+      {% endif %}
     {% endfor %}
+  </div>
   </div>
   
 {% endblock %}

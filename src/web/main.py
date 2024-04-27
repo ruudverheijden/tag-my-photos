@@ -1,5 +1,5 @@
 from flask_bootstrap import Bootstrap5
-from flask import Flask, render_template
+from flask import Flask, render_template, send_from_directory
 from sqlalchemy import create_engine, select
 from dotenv import load_dotenv
 import os
@@ -17,15 +17,20 @@ def index():
 
 @app.route("/faces")
 def faces():
+    """
+    Show an overview of all faces in the database
+    """
     db_engine = create_engine('sqlite:///' + os.environ["DATABASE_PATH"])
     with db_engine.connect() as conn:
-        query = select(faces_table.c.id, faces_table.c.thumbnail_path)
+        query = select(faces_table.c.id, faces_table.c.thumbnail_filename)
         result = conn.execute(query)
-        thumbnails = [{'thumbnail_path': os.environ["THUMBNAILS_PATH"] + "/" + row[1], 'id': row[0]} for row in result]
+        thumbnails = [{'thumbnail_path': "/thumbnails/" + row[1], 'id': row[0]} for row in result]
         conn.close()
     return render_template('faces_overview.html', thumbnails=thumbnails)
 
 @app.route("/thumbnails/<path:filename>")
 def serve_thumbnail(filename):
-    return app.send_static_file(os.environ["THUMBNAILS_PATH"] + "/" + filename)
-
+    """
+    Serve a thumbnail from the thumbnail folder
+    """
+    return send_from_directory(os.path.join("../../", os.environ["THUMBNAILS_PATH"]), filename)
