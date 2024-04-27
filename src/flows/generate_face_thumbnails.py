@@ -26,7 +26,7 @@ def generate_thumbnail(thumbnail_dir: str, file_path: str, file_postfix: str, fa
         thumbnail_filename = filename_base + str(file_postfix) + file_extension
         target_path = os.path.join(thumbnail_dir, thumbnail_filename)
 
-        cropped_image.save(thumbnail_filename)
+        cropped_image.save(target_path)
 
         return thumbnail_filename
 
@@ -62,14 +62,14 @@ def generate_face_thumbnails():
             thumbnail_filename = generate_thumbnail(
                 os.environ["THUMBNAILS_PATH"],
                 row.path,
-                '-' + str(row.file_id) + '-' + str(row.face_id),
+                f"-{row.file_id}-{row.face_id}",
                 row.facial_area_left,
                 row.facial_area_top,
                 row.facial_area_width,
                 row.facial_area_height
             )
             
-            update_statement = faces_table.update().where(faces_table.c.id == row.id).values(thumbnail_filename=thumbnail_filename)
+            update_statement = faces_table.update().where(faces_table.c.id == row.face_id).values(thumbnail_filename=thumbnail_filename)
             conn.execute(update_statement)
             conn.commit()
 
