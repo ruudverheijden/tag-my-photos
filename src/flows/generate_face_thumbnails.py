@@ -1,5 +1,5 @@
 from prefect import flow, task
-from sqlalchemy import create_engine, select, and_
+from sqlalchemy import create_engine, select
 from dotenv import load_dotenv
 from PIL import Image
 import os
@@ -10,7 +10,7 @@ load_dotenv()  # Inject environment variables from .env during development
 MAX_FACE_THUMBNAIL_SIZE = (500, 500)
 
 @task()
-def generate_thumbnail(target_path: str, file_path: str, file_postfix: str, face_left: int, face_top: int, face_width: int, face_height: int) -> str:
+def generate_thumbnail(thumbnail_dir: str, file_path: str, file_postfix: str, face_left: int, face_top: int, face_width: int, face_height: int) -> str:
     """
     Create a thumbnail of the face area of an image    
     """
@@ -21,14 +21,14 @@ def generate_thumbnail(target_path: str, file_path: str, file_postfix: str, face
         cropped_image = image.crop((face_left, face_top, face_left + face_width, face_top + face_height))
         cropped_image.thumbnail(MAX_FACE_THUMBNAIL_SIZE)
 
-        file_name = os.path.basename(file_path)
-        filename_base, file_extension = os.path.splitext(file_name.lower())
-        cropped_filename = filename_base + str(file_postfix) + file_extension
-        thumbnail_path = os.path.join(target_path, cropped_filename)
+        file_path = os.path.basename(file_path)
+        filepath_base, file_extension = os.path.splitext(file_path.lower())
+        cropped_filepath = filepath_base + str(file_postfix) + file_extension
+        target_path = os.path.join(thumbnail_dir, cropped_filepath)
 
-        cropped_image.save(thumbnail_path)
+        cropped_image.save(target_path)
 
-        return thumbnail_path
+        return cropped_filepath
 
 def create_thumbnails_folder_if_needed(path: str):
     """
