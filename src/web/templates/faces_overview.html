@@ -7,7 +7,9 @@
         <div class="row">
       {% endif %}
       <div class="col">
-        <img src="{{ thumbnail.thumbnail_path }}" class="img-thumbnail">
+        <a href="{{ url_for('file', id=thumbnail.file_id) }}">
+          <img src="{{ thumbnail.thumbnail_path }}" class="img-thumbnail">
+        </a>
       </div>
       {% if loop.index % 6 == 0 or loop.last %}
         </div>
