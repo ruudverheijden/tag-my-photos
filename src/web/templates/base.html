@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        {% block head %}
+        <!-- Required meta tags -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        {% block styles %}
+            <!-- Bootstrap CSS -->
+            {{ bootstrap.load_css() }}
+        {% endblock %}
+
+        <title>Tag My Photos</title>
+        {% endblock %}
+    </head>
+    <body>
+        {% from 'bootstrap5/nav.html' import render_nav_item %}
+
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <div class="navbar-nav mr-auto">
+                {{ render_nav_item('index', 'Tag Photos') }}
+                {{ render_nav_item('faces', 'Faces') }}
+            </div>
+        </nav>
+        <!-- Your page content -->
+        {% block content %}{% endblock %}
+
+        {% block scripts %}
+            <!-- Optional JavaScript -->
+            {{ bootstrap.load_js() }}
+        {% endblock %}
+    </body>
+</html>

@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="container">
+    {% for thumbnail in thumbnails %}
+      <div class="row">
+          <div class="col">
+            <img src="{{ thumbnail.thumbnail_path }}" class="img-thumbnail">
+          </div>
+      </div>
+    {% endfor %}
+  </div>
+  
+{% endblock %}

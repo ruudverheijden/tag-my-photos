@@ -29,10 +29,11 @@ Designed to run in parallel to other Photo Management tools (like Synology Photo
 9. User manually bulk updates file metadata
 
 # TODO
-- Create Prefect flow and task for reading photos
 - Create task for parsing photo metadata
-- Create thumbnails
 - Create Dockerfile containing
+- Recognize faces:
+  - Create Admin interface to view and accept proposals + manually tag
+  - Recognition strategy: calculate distance between new photo and every face in a known Person. Suggest cluster with lowest average distance.
 
 
 # Development
@@ -55,3 +56,5 @@ Designed to run in parallel to other Photo Management tools (like Synology Photo
 2. Run `prefect server start` to start the Prefect Local Server running at http://127.0.0.1:4200
 
 3. To run a specific Python script from the root directory use e.g. `python -m src.flows.initialize_database`
+
+4. Run the web interface via `flask --app src.web.main run` and browse to `http://127.0.0.1:5000`
