@@ -1,7 +1,7 @@
 from prefect import flow, task
 from sqlalchemy import create_engine, select
 from dotenv import load_dotenv
-from PIL import Image
+from PIL import Image, ImageOps
 import os
 from ..utils.tables import files as files_table, faces as faces_table
 
@@ -17,6 +17,9 @@ def generate_thumbnail(thumbnail_dir: str, file_path: str, file_postfix: str, cr
     """
     # Open image in RGB mode
     with Image.open(file_path) as image:
+        
+        # Transpose the image according to its EXIF Orientation tag
+        image = ImageOps.exif_transpose(image)
         
         # If a face crop is provided, crop the image to the face area
         if crop is not None:
