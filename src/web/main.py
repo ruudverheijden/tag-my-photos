@@ -3,7 +3,7 @@ from flask import Flask, render_template, send_from_directory
 from sqlalchemy import create_engine, select
 from dotenv import load_dotenv
 import os
-from ..utils.tables import files as files_table, faces as faces_table
+from ..utils.tables import files as files_table, faces as faces_table, persons as persons_table
 
 load_dotenv()  # Inject environment variables from .env during development
 
@@ -22,21 +22,35 @@ def faces():
     """
     db_engine = create_engine('sqlite:///' + os.environ["DATABASE_PATH"])
     with db_engine.connect() as conn:
-        query = select(
-            faces_table.c.id.label("face_id"),
+        # Fetch all faces
+        # TODO: add pagination
+        query_faces = select(
+            faces_table.c.id,
             faces_table.c.thumbnail_filename,
-            files_table.c.id.label("file_id")).join(
-                files_table,
-                faces_table.c.file_id == files_table.c.id
+            faces_table.c.person_id,
+            faces_table.c.file_id,
             )
-        result = conn.execute(query)
-        thumbnails = [{
+        result_faces = conn.execute(query_faces)
+        faces = [{
             'thumbnail_path': "/thumbnail/" + row.thumbnail_filename,
-            'face_id': row.face_id,
+            'id': row.id,
+            'person_id': row.person_id,
             'file_id': row.file_id
-            } for row in result]
+            } for row in result_faces]
+        
+        # Fetch all persons
+        query_persons = select(
+            persons_table.c.id,
+            persons_table.c.name
+        )
+        result_persons = conn.execute(query_persons)
+        persons = [{
+            'id': row.id,
+            'name': row.name
+        } for row in result_persons]
         conn.close()
-    return render_template('faces_overview.html', thumbnails=thumbnails)
+        print(faces)
+    return render_template('faces_overview.html', faces=faces, persons=persons)
 
 @app.route("/thumbnail/<path:filename>")
 def thumbnail(filename):
@@ -56,4 +70,8 @@ def file(id):
         result = conn.execute(query)
         row = result.fetchone()
         conn.close()
-    return render_template('file.html', file_path="/thumbnail/" + row.thumbnail_filename)
+        
+    if row is None:
+        return "File not found", 404
+    else:
+        return render_template('file.html', file_path="/thumbnail/" + row.thumbnail_filename)

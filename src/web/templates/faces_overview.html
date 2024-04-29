@@ -2,20 +2,44 @@
 
 {% block content %}
   <div class="container">
-    {% for thumbnail in thumbnails %}
-      {% if loop.index0 % 6 == 0 %}
-        <div class="row">
-      {% endif %}
-      <div class="col">
-        <a href="{{ url_for('file', id=thumbnail.file_id) }}">
-          <img src="{{ thumbnail.thumbnail_path }}" class="img-thumbnail">
-        </a>
-      </div>
-      {% if loop.index % 6 == 0 or loop.last %}
+    <div class="row">
+      {% for face in faces %}
+        <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
+          <figure class="figure rounded overflow-hidden position-relative">
+            <a href="{{ url_for('file', id=face.file_id) }}">
+              <img src="{{ face.thumbnail_path }}" class="figure-img img-fluid">
+            </a>
+            <figcaption class="figure-caption">
+              <form>
+                <select class="form-select">
+                  <option selected>{{ face.face_id | default('Unknown')}}</option>
+                  <option value="1">Person</option>
+                  <option value="2">Person</option>
+                  <option value="3">Person</option>
+                </select>
+              </form>
+            </figcaption>
+          </figure>
         </div>
-      {% endif %}
-    {% endfor %}
+      {% endfor %}
+    </div>
   </div>
-  </div>
-  
+{% endblock %}
+
+{% block styles %}
+  {{ super() }}
+  <style>
+    .figure-img {
+      margin-bottom: 0;
+    }
+
+    .figure-caption {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      color: white;
+      padding: 10px 15px;
+    }
+  </style>
 {% endblock %}
