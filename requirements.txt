@@ -5,4 +5,3 @@ pillow==10.2.0
 deepface==0.0.89
 faiss-cpu==1.8.0
 numpy==1.26.4
-bootstrap-flask==2.4.0

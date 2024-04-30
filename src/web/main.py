@@ -1,4 +1,3 @@
-from flask_bootstrap import Bootstrap5
 from flask import Flask, render_template, send_from_directory
 from sqlalchemy import create_engine, select
 from dotenv import load_dotenv
@@ -8,8 +7,6 @@ from ..utils.tables import files as files_table, faces as faces_table, persons a
 load_dotenv()  # Inject environment variables from .env during development
 
 app = Flask(__name__)
-
-bootstrap = Bootstrap5(app)
 
 @app.route("/")
 def index():
@@ -75,3 +72,7 @@ def file(id):
         return "File not found", 404
     else:
         return render_template('file.html', file_path="/thumbnail/" + row.thumbnail_filename)
+    
+@app.route("/persons")
+def persons():
+    return render_template('base.html')
