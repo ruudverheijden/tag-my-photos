@@ -46,7 +46,6 @@ def faces():
             'name': row.name
         } for row in result_persons]
         conn.close()
-        print(faces)
     return render_template('faces_overview.html', faces=faces, persons=persons)
 
 @app.route("/thumbnail/<path:filename>")

@@ -28,6 +28,6 @@ faces = Table(
 
 persons = Table(
     'persons', meta, 
-    Column('id', Integer, primary_key = True), 
-    Column('name', String)
+    Column('id', Integer, primary_key=True), 
+    Column('name', String, unique=True)
 )

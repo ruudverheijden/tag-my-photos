@@ -11,12 +11,14 @@
             </a>
             <figcaption class="figure-caption">
               <form>
-                <select class="form-select">
-                  <option selected>{{ face.face_id | default('Unknown')}}</option>
-                  <option value="1">Person</option>
-                  <option value="2">Person</option>
-                  <option value="3">Person</option>
-                </select>
+                  <div class="row g-2">
+                    <div class="col">
+                      <input class="form-control" list="persons" placeholder="Type to add a name...">
+                    </div>
+                    <div class="col-auto">
+                      <input type="submit" class="btn" value="Save" />
+                    </div>
+                  </div>
               </form>
             </figcaption>
           </figure>
@@ -24,12 +26,22 @@
       {% endfor %}
     </div>
   </div>
+  <datalist id="persons">
+    {% for person in persons %}
+      <option value="{{ person.name }}"></option>
+    {% endfor %}
+  </datalist>
 {% endblock %}
 
 {% block style %}
   <style>
+    .figure {
+      width: 100%;
+    }
+
     .figure-img {
       margin-bottom: 0;
+      width: 100%;
     }
 
     .figure-caption {
