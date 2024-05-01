@@ -61,7 +61,8 @@
     const persons = {{ persons | tojson }} || [];
 
     // Handle Face Tagging Form: check if the person already exists, if not add a new person, and add it to the face
-    document.querySelectorAll('.tag-person-form').addEventListener('submit', async (event) => {
+    document.querySelectorAll('.tag-person-form').forEach(form => {
+      form.addEventListener('submit', async (event) => {
         event.preventDefault();
         const formData = new FormData(event.target);
         const person = formData.get('person');
@@ -105,11 +106,12 @@
         if (face_response.status === 200) {
           console.log(`Face ${faceId} updated successfully with Person ID ${person_id}`)
           // Hide the face container after tagging
-          document.querySelector('.face-container').closest('.face-container').style.display = 'none';
+          parent = event.explicitOriginalTarget.parentElement.closest('.face-container').style.display = 'none';
         } else {
           console.log('Error updating face person_id', await face_response.text());
           // TODO: Show error message to user
         }
-      });
+      })
+    });
   </script>
 {% endblock %}
