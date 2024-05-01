@@ -1,30 +1,42 @@
-from prefect import flow, task
-from sqlalchemy import create_engine, select
+"""Generate thumbnails for faces and files in the database"""
+
+import os
+
 from dotenv import load_dotenv
 from PIL import Image, ImageOps
-import os
-from ..utils.tables import files as files_table, faces as faces_table
+from prefect import flow, task
+from sqlalchemy import create_engine, select
+
+from ..utils.tables import faces as faces_table
+from ..utils.tables import files as files_table
 
 load_dotenv()  # Inject environment variables from .env during development
 
 MAX_FACE_THUMBNAIL_SIZE = (500, 500)
 MAX_FILE_THUMBNAIL_SIZE = (1000, 1000)
 
+
 @task()
-def generate_thumbnail(thumbnail_dir: str, file_path: str, file_postfix: str, crop: list[int, int, int, int] = None) -> str:
+def generate_thumbnail(
+    thumbnail_dir: str,
+    file_path: str,
+    file_postfix: str,
+    crop: list[int, int, int, int] = None,
+) -> str:
     """
-    Create a thumbnail of the face area of an image    
+    Create a thumbnail of the face area of an image
     """
     # Open image in RGB mode
     with Image.open(file_path) as image:
-        
         # Transpose the image according to its EXIF Orientation tag
         image = ImageOps.exif_transpose(image)
-        
+
         # If a face crop is provided, crop the image to the face area
         if crop is not None:
             face_left, face_top, face_width, face_height = crop
-            output_image = image.crop((face_left, face_top, face_left + face_width, face_top + face_height))
+            output_image = image.crop(
+                (face_left, face_top, face_left + face_width, face_top + face_height)
+            )
             output_image.thumbnail(MAX_FACE_THUMBNAIL_SIZE)
         # Otherwise we create a thumbnail of the whole image
         else:
@@ -54,60 +66,76 @@ def generate_face_thumbnails(db_engine: create_engine):
     Generate thumbnails for all faces in the database that do not have a thumbnail yet
     """
     with db_engine.connect() as conn:
-        statement = select(
-            files_table.c.id.label('file_id'),
-            files_table.c.path,
-            faces_table.c.id.label('face_id'),
-            faces_table.c.facial_area_left,
-            faces_table.c.facial_area_top,
-            faces_table.c.facial_area_width,
-            faces_table.c.facial_area_height
-        ).select_from(files_table).join(faces_table).where(
-            faces_table.c.thumbnail_filename.is_(None)
+        statement = (
+            select(
+                files_table.c.id.label("file_id"),
+                files_table.c.path,
+                faces_table.c.id.label("face_id"),
+                faces_table.c.facial_area_left,
+                faces_table.c.facial_area_top,
+                faces_table.c.facial_area_width,
+                faces_table.c.facial_area_height,
+            )
+            .select_from(files_table)
+            .join(faces_table)
+            .where(faces_table.c.thumbnail_filename.is_(None))
         )
         for row in conn.execute(statement):
             thumbnail_filename = generate_thumbnail(
                 os.environ["THUMBNAILS_PATH"],
                 row.path,
                 f"-{row.file_id}-{row.face_id}",
-                [row.facial_area_left, row.facial_area_top, row.facial_area_width, row.facial_area_height]
+                [
+                    row.facial_area_left,
+                    row.facial_area_top,
+                    row.facial_area_width,
+                    row.facial_area_height,
+                ],
             )
-            
-            update_statement = faces_table.update().where(faces_table.c.id == row.face_id).values(thumbnail_filename=thumbnail_filename)
+
+            update_statement = (
+                faces_table.update()
+                .where(faces_table.c.id == row.face_id)
+                .values(thumbnail_filename=thumbnail_filename)
+            )
             conn.execute(update_statement)
             conn.commit()
-            
+
 
 def generate_file_thumbnails(db_engine: create_engine):
     """
     Generate thumbnails for all files in the database that do not have a thumbnail yet
     """
-    
+
     with db_engine.connect() as conn:
-        statement = select(
-            files_table.c.id,
-            files_table.c.path
-        ).where(
+        statement = select(files_table.c.id, files_table.c.path).where(
             files_table.c.thumbnail_filename.is_(None)
         )
         for row in conn.execute(statement):
             thumbnail_filename = generate_thumbnail(
-                os.environ["THUMBNAILS_PATH"],
-                row.path,
-                f"-{row.id}"
+                os.environ["THUMBNAILS_PATH"], row.path, f"-{row.id}"
             )
-            
-            update_statement = files_table.update().where(files_table.c.id == row.id).values(thumbnail_filename=thumbnail_filename)
+
+            update_statement = (
+                files_table.update()
+                .where(files_table.c.id == row.id)
+                .values(thumbnail_filename=thumbnail_filename)
+            )
             conn.execute(update_statement)
             conn.commit()
 
+
 @flow()
 def generate_thumbnails():
-    db_engine = create_engine('sqlite:///' + os.environ["DATABASE_PATH"])
-    
+    """
+    Generate thumbnails for all faces and files in the database
+    """
+    db_engine = create_engine("sqlite:///" + os.environ["DATABASE_PATH"])
+
     create_thumbnails_folder_if_needed(os.environ["THUMBNAILS_PATH"])
     generate_face_thumbnails(db_engine)
     generate_file_thumbnails(db_engine)
+
 
 if __name__ == "__main__":
     generate_thumbnails()
