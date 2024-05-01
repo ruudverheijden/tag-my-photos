@@ -58,7 +58,9 @@
 
 {% block scripts %}
   <script>
-    const persons = {{ persons | tojson }} || [];
+    // Note: must be single-quoted since Jinja inserts JSON with double quotes
+    let personsJson = '{{ persons | tojson }}';
+    let persons = JSON.parse(personsJson) || [];
 
     // Handle Face Tagging Form: check if the person already exists, if not add a new person, and add it to the face
     document.querySelectorAll('.tag-person-form').forEach(form => {
@@ -86,6 +88,7 @@
           if (person_response.status === 201) {
             data = await person_response.json();
             person_id = data.id;
+            persons.push({ id: person_id, name: person });
           } else {
             console.log('Error creating person', await person_response.text());
             // TODO: Show error message to user
