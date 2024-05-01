@@ -3,6 +3,7 @@ from sqlalchemy import create_engine, select
 from dotenv import load_dotenv
 import os
 from ..utils.tables import files as files_table, faces as faces_table, persons as persons_table
+from flask import request
 
 load_dotenv()  # Inject environment variables from .env during development
 
@@ -75,3 +76,17 @@ def file(id):
 @app.route("/persons")
 def persons():
     return render_template('base.html')
+
+@app.route("/person", methods=["POST"])
+def add_person():
+    name = request.form.get("name")
+    if name:
+        db_engine = create_engine('sqlite:///' + os.environ["DATABASE_PATH"])
+        with db_engine.connect() as conn:
+            # Insert new person into the database
+            insert_person = persons_table.insert().values(name=name)
+            conn.execute(insert_person)
+            conn.close()
+        return "Person created", 201
+    else:
+        return "Invalid request, missing 'name' field", 400
