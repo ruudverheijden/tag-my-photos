@@ -4,16 +4,17 @@
   <div class="container">
     <div class="row">
       {% for face in faces %}
-        <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
+        <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12 face-container">
           <figure class="figure rounded overflow-hidden position-relative">
-            <a href="{{ url_for('file', id=face.file_id) }}">
+            <a href="{{ url_for('file', file_id=face.file_id) }}">
               <img src="{{ face.thumbnail_path }}" class="figure-img img-fluid">
             </a>
             <figcaption class="figure-caption">
-              <form>
+              <form class="tag-person-form">
                   <div class="row g-2">
                     <div class="col">
-                      <input class="form-control" list="persons" placeholder="Type to add a name...">
+                      <input name="person" class="form-control" list="persons" placeholder="Type to add a name..." autocapitalize="on" translate="no">
+                      <input name="face_id" type="hidden" value="{{ face.id }}">
                     </div>
                     <div class="col-auto">
                       <input type="submit" class="btn" value="Save" />
@@ -53,4 +54,62 @@
       padding: 10px 15px;
     }
   </style>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    const persons = {{ persons | tojson }} || [];
+
+    // Handle Face Tagging Form: check if the person already exists, if not add a new person, and add it to the face
+    document.querySelectorAll('.tag-person-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const formData = new FormData(event.target);
+        const person = formData.get('person');
+        let person_id = null;
+
+        // Prevent empty input
+        if (!person || person.trim() === ''){
+          return;
+        }
+
+        // If we don't know the person yet, add it to the database first
+        const personExists = persons.find((p) => p.name.toLowerCase() === person.toLowerCase());
+
+        if (!personExists) {
+          const person_response = await fetch('/person', {
+            method: 'POST',
+            body: JSON.stringify({ name: person }),
+            headers: { 'Content-Type': 'application/json' }
+          });
+
+          if (person_response.status === 201) {
+            data = await person_response.json();
+            person_id = data.id;
+          } else {
+            console.log('Error creating person', await person_response.text());
+            // TODO: Show error message to user
+          }
+        // Or fetch it locally if we can find it in the persons list
+        } else {
+          person_id = personExists.id;
+        }
+
+        // Update the Face record with the defined person_id
+        const faceId = formData.get('face_id');
+        const face_response = await fetch(`/face/${faceId}`, {
+          method: 'POST',
+          body: JSON.stringify({ person_id: person_id }),
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (face_response.status === 200) {
+          console.log(`Face ${faceId} updated successfully with Person ID ${person_id}`)
+          // Hide the face container after tagging
+          document.querySelector('.face-container').closest('.face-container').style.display = 'none';
+        } else {
+          console.log('Error updating face person_id', await face_response.text());
+          // TODO: Show error message to user
+        }
+      });
+  </script>
 {% endblock %}

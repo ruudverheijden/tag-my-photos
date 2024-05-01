@@ -37,7 +37,7 @@ def faces():
             faces_table.c.thumbnail_filename,
             faces_table.c.person_id,
             faces_table.c.file_id,
-        )
+        ).where(faces_table.c.person_id.is_(None))
         result_faces = conn.execute(query_faces)
         data_faces = [
             {
@@ -69,7 +69,7 @@ def thumbnail(filename):
     )
 
 
-@app.route("/file/<int:id>")
+@app.route("/file/<int:file_id>")
 def file(file_id):
     """
     Show the photo from the files table based on the id
@@ -102,16 +102,69 @@ def persons():
 @app.route("/person", methods=["POST"])
 def add_person():
     """
-    Add a new person to the database
+    Add a new person to the database if it does not exist yet
     """
-    name = request.form.get("name")
-    if name:
+    data = request.json
+
+    if not request.is_json:
+        return "Invalid request, must be JSON", 415
+
+    if data["name"]:
         db_engine = create_engine("sqlite:///" + os.environ["DATABASE_PATH"])
         with db_engine.connect() as conn:
-            # Insert new person into the database
-            insert_person = persons_table.insert().values(name=name)
-            conn.execute(insert_person)
+            # Check if the person already exists
+            query_person = select(persons_table).where(
+                persons_table.c.name.collate("NOCASE") == data["name"].lower()
+            )
+            if conn.execute(query_person).fetchone():
+                conn.close()
+                return "Person already exists", 409
+
+            # Otherwise, insert new person into the database
+            insert_person = persons_table.insert().values(name=data["name"])
+            result = conn.execute(insert_person)
+            conn.commit()
             conn.close()
-        return "Person created", 201
-    else:
-        return "Invalid request, missing 'name' field", 400
+
+            if result.is_insert:
+                return {"id": result.inserted_primary_key[0]}, 201
+
+            return "Failed to insert person", 500
+
+    return "Invalid request, missing 'name' field", 400
+
+
+@app.route("/face/<int:face_id>", methods=["POST"])
+def update_face(face_id):
+    """
+    Update an existing face record with a new person_id
+    """
+    data = request.json
+
+    if not request.is_json:
+        return "Invalid request, must be JSON", 415
+
+    if (
+        data["person_id"]
+        and isinstance(data["person_id"], int)
+        and face_id
+        and isinstance(face_id, int)
+    ):
+        db_engine = create_engine("sqlite:///" + os.environ["DATABASE_PATH"])
+        with db_engine.connect() as conn:
+            # Update the face record with the new person_id
+            update = (
+                faces_table.update()
+                .where(faces_table.c.id == face_id)
+                .values(person_id=data["person_id"])
+            )
+            result = conn.execute(update)
+            conn.commit()
+            conn.close()
+
+            if result.rowcount > 0:
+                return "Face record updated successfully", 200
+
+            return "Failed to update face record", 500
+
+    return "Invalid request, missing (int)'person_id' and/or (int)'face_id' fields", 400
