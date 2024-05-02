@@ -41,6 +41,7 @@ def insert_initial_data(db_engine: Engine) -> None:
         # we don't want to link to a specific person
         query = insert(persons_table).values(id=0, name="Ignored")
         conn.execute(query)
+        conn.commit()
         conn.close()
 
 
