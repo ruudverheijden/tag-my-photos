@@ -13,7 +13,7 @@
               <form class="tag-person-form">
                   <div class="row g-2">
                     <div class="col">
-                      <input name="person" class="form-control" list="persons" placeholder="Type to add a name..." autocapitalize="on" translate="no">
+                      <input name="person" class="form-control" list="persons" placeholder="Type to add a name..." autocapitalize="on" translate="no" autocomplete="off">
                       <input name="face_id" type="hidden" value="{{ face.id }}">
                     </div>
                     <div class="col-auto">
@@ -88,7 +88,10 @@
           if (person_response.status === 201) {
             data = await person_response.json();
             person_id = data.id;
+
+            // Add the new person to the persons list for local lookup
             persons.push({ id: person_id, name: person });
+            document.getElementById('persons').innerHTML += `<option value="${person}"></option>`;
           } else {
             console.log('Error creating person', await person_response.text());
             // TODO: Show error message to user
