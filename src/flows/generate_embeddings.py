@@ -42,7 +42,7 @@ def generate_embeddings():
     index = faiss.read_index(os.environ["EMBEDDINGS_INDEX_PATH"])
 
     with db_engine.connect() as conn:
-        statement = select(files_table).where(files_table.c.contains_face is None)
+        statement = select(files_table).where(files_table.c.contains_face.is_(None))
         for row in conn.execute(statement):
             faces = generate_embeddings_from_file(
                 row.path, FACE_RECOGNITION_MODEL, FACE_DETECTION_MODEL
