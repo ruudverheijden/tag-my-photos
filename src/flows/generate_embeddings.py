@@ -14,6 +14,10 @@ from ..utils.tables import files as files_table
 
 load_dotenv()  # Inject environment variables from .env during development
 
+# Current Facenet d128 with retinaface is a good combination. It might
+# be optimized even more, although we need to trade-off speed vs accuracy.
+# See https://github.com/serengil/deepface/tree/master/benchmarks
+# Note: Faiss is using Euclidean L2 distance by default
 FACE_RECOGNITION_MODEL = "Facenet"  # See Deepface documentation for all options
 FACE_DETECTION_MODEL = "retinaface"  # See Deepface documentation for all options
 

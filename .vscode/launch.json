@@ -17,6 +17,12 @@
             ],
             "jinja": true,
             "autoStartBrowser": false
+        },
+        {
+            "name": "Python Debugger: Flow Recognize Unknown Faces",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "src.flows.recognize_unknown_faces"
         }
     ]
 }
