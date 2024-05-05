@@ -32,18 +32,24 @@ def faces():
     with db_engine.connect() as conn:
         # Fetch all faces
         # TODO: add pagination
-        query_faces = select(
-            faces_table.c.id,
-            faces_table.c.thumbnail_filename,
-            faces_table.c.person_id,
-            faces_table.c.file_id,
-        ).where(faces_table.c.person_id.is_(None))
+        query_faces = (
+            select(
+                faces_table.c.id,
+                faces_table.c.thumbnail_filename,
+                faces_table.c.person_id,
+                faces_table.c.person_id_suggested,
+                faces_table.c.file_id,
+            )
+            .where(faces_table.c.person_id.is_(None)).order_by(faces_table.c.person_id_suggested.desc())
+        )
         result_faces = conn.execute(query_faces)
+        
         data_faces = [
             {
                 "thumbnail_path": "/thumbnail/" + row.thumbnail_filename,
                 "id": row.id,
                 "person_id": row.person_id,
+                "person_id_suggested": row.person_id_suggested,
                 "file_id": row.file_id,
             }
             for row in result_faces

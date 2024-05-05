@@ -57,7 +57,7 @@ def recognize_unknown_faces():
             indices = indices[:MAX_SIMILAR_FACES]
             distances = distances[:MAX_SIMILAR_FACES]
 
-            print(f"Nearest Neighbours {indices} with distances {distances}")
+            print(f"Nearest Neighbours of {row.id} are {indices} with distances {distances}")
 
             # Get person_id for all close faces
             statement_face = select(faces_table.c.person_id).where(
