@@ -46,7 +46,7 @@ def faces():
         
         data_faces = [
             {
-                "thumbnail_path": "/thumbnail/" + row.thumbnail_filename,
+                "thumbnail_path": "/thumbnail/" + row.thumbnail_filename if row.thumbnail_filename else None,
                 "id": row.id,
                 "person_id": row.person_id,
                 "person_id_suggested": row.person_id_suggested,
