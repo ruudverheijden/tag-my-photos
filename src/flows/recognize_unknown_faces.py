@@ -21,6 +21,64 @@ SIMILAR_FACES_RELATIVE_TO_MIN_DISTANCE = 0.10
 MAX_SIMILAR_FACES = 3
 
 
+def find_nearest_neighbors(
+    embedding: list[float], index: faiss.Index
+) -> tuple[list[float], list[int]]:
+    """
+    Find the k nearest neighbors of the given embedding in the Faiss index
+    """
+    # Search for the nearest neighbor in the Faiss index
+    distances, indices = index.search(np.array([embedding]), K_NEAREST_NEIGHBORS)
+
+    # Remove indices with distance 0, which is the searched face itself
+    distance_zero = np.where(distances == 0)
+    indices = np.delete(indices, distance_zero)
+    distances = np.delete(distances, distance_zero)
+
+    # Remove indices that have a distance that's more that xx% higher than the
+    # minimum distance as they are probably not relevant
+    distance_threshold = np.where(
+        distances > distances[0] * (1 + SIMILAR_FACES_RELATIVE_TO_MIN_DISTANCE)
+    )
+    indices = np.delete(indices, distance_threshold)
+    distances = np.delete(distances, distance_threshold)
+
+    # Limit the number of similar faces to consider
+    indices = indices[:MAX_SIMILAR_FACES]
+    distances = distances[:MAX_SIMILAR_FACES]
+
+    return distances, indices
+
+
+def find_best_matching_known_person(ids: list, conn) -> int | None:
+    """
+    Find the best matching known person in the db
+    Matching a person that's already confirmed is the best guess we can make
+    """
+    # Get person_id for all close faces
+    statement = select(faces_table.c.person_id).where(faces_table.c.id.in_(ids))
+
+    found_persons = []
+
+    for row_face in conn.execute(statement):
+        found_persons.append(row_face.person_id)
+
+    # Count the duplicate values
+    duplicate_counts = Counter(found_persons)
+
+    # Sort the duplicate counts in descending order
+    sorted_counts = sorted(duplicate_counts.items(), key=lambda x: x[1], reverse=True)
+
+    # Best matching person is the one with the highest count
+    best_match_id, best_match_count = sorted_counts[0]
+
+    # Only suggest when at least half of the found matches are the same person
+    if best_match_count >= int(len(found_persons) / 2) and best_match_id is not None:
+        return best_match_id
+
+    return None
+
+
 @flow()
 def recognize_unknown_faces():
     """
@@ -35,59 +93,18 @@ def recognize_unknown_faces():
             # Load the face embedding from the database
             embedding = np.frombuffer(row.embedding, dtype=np.float32)
 
-            # Search for the nearest neighbor in the Faiss index
-            distances, indices = index.search(
-                np.array([embedding]), K_NEAREST_NEIGHBORS
+            distances, indices = find_nearest_neighbors(embedding, index)
+
+            print(
+                f"Nearest Neighbors of {row.id} are {indices} with distances {distances}"
             )
 
-            # Remove indices with distance 0, which is the face itself
-            distance_zero = np.where(distances == 0)
-            indices = np.delete(indices, distance_zero)
-            distances = np.delete(distances, distance_zero)
-
-            # Remove indices that have a distance that's more that xx% higher than the
-            # minimum distance as they are probably not relevant
-            distance_threshold = np.where(
-                distances > distances[0] * (1 + SIMILAR_FACES_RELATIVE_TO_MIN_DISTANCE)
-            )
-            indices = np.delete(indices, distance_threshold)
-            distances = np.delete(distances, distance_threshold)
-
-            # Limit the number of similar faces to consider
-            indices = indices[:MAX_SIMILAR_FACES]
-            distances = distances[:MAX_SIMILAR_FACES]
-
-            print(f"Nearest Neighbours of {row.id} are {indices} with distances {distances}")
-
-            # Get person_id for all close faces
-            statement_face = select(faces_table.c.person_id).where(
-                faces_table.c.id.in_(indices.tolist())
-            )
-
-            found_persons = []
-
-            for row_face in conn.execute(statement_face):
-                found_persons.append(row_face.person_id)
-
-            # Count the duplicate values in found_persons
-            duplicate_counts = Counter(found_persons)
-
-            # Sort the duplicate counts in descending order
-            sorted_counts = sorted(
-                duplicate_counts.items(), key=lambda x: x[1], reverse=True
-            )
-
-            # Best matching person is the one with the highest count
-            best_match_id, best_match_count = sorted_counts[0]
+            best_match_id = find_best_matching_known_person(indices.tolist(), conn)
 
             # Only suggest when at least half of the found matches are the same person
-            if (
-                best_match_count >= int(len(found_persons) / 2)
-                and best_match_id is not None
-            ):
-                print(
-                    f"Best matching person: {best_match_id} with {best_match_count} close faces"
-                )
+            if best_match_id is not None:
+                print(f"Best matching person: {best_match_id}")
+                
                 # Update the face with the best matching person
                 update_statement = (
                     faces_table.update()
