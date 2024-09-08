@@ -1,6 +1,7 @@
 python-dotenv==1.0.1
 prefect==2.16.0
 sqlalchemy==2.0.28
+flask-sqlalchemy==3.1.1
 pillow==10.2.0
 deepface==0.0.89
 faiss-cpu==1.8.0

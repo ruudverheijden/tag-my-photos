@@ -11,6 +11,7 @@ from sqlalchemy import (
     MetaData,
     String,
     Table,
+    UUID,
 )
 
 meta = MetaData()
@@ -47,4 +48,12 @@ persons = Table(
     meta,
     Column("id", Integer, primary_key=True),
     Column("name", String, unique=True),
+)
+
+clusters = Table(
+    "clusters",
+    meta,
+    Column("id", Integer, primary_key=True),
+    Column("cluster_id", UUID),
+    Column("face_id", ForeignKey("faces.id"), nullable=False),
 )
