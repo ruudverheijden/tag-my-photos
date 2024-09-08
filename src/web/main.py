@@ -4,7 +4,7 @@ import os
 
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, send_from_directory
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, select, outerjoin
 
 from ..utils.tables import faces as faces_table
 from ..utils.tables import files as files_table
@@ -102,7 +102,31 @@ def persons():
     """
     Persons overview page
     """
-    return render_template("base.html")
+    db_engine = create_engine("sqlite:///" + os.environ["DATABASE_PATH"])
+    with db_engine.connect() as conn:
+        # Select 1 face per person
+        first_faces = select(
+            faces_table.c.person_id,
+            faces_table.c.thumbnail_filename
+        ).where(faces_table.c.person_id.isnot(None)
+        ).group_by(faces_table.c.person_id
+        ).distinct(
+        ).subquery()
+
+        # Join persons_table with the first_faces subquery and exclude 'Ignored' which has ID 0
+        query_persons = select(
+            persons_table.c.id,
+            persons_table.c.name,
+            first_faces.c.thumbnail_filename
+        ).select_from(
+            outerjoin(persons_table, first_faces, persons_table.c.id == first_faces.c.person_id)
+        ).where(persons_table.c.id > 0)
+
+        result_persons = conn.execute(query_persons)
+        data_persons = [{"id": row.id, "name": row.name, "thumbnail_path": "/thumbnail/" + row.thumbnail_filename} for row in result_persons]
+        conn.close()
+        
+    return render_template("persons_overview.html", persons=data_persons)
 
 
 @app.route("/person", methods=["POST"])

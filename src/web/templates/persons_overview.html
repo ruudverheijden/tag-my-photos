@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="container">
+    <div class="row">
+      {% for person in persons %}
+        <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12 face-container">
+          <figure class="figure rounded overflow-hidden position-relative"> 
+            <a href="">
+              <img src="{{ person.thumbnail_path }}" class="figure-img img-fluid">
+            </a>
+            <figcaption class="figure-caption">
+              <div class="row g-2">
+                <div class="col">
+                  {{ person.name }}
+                </div>
+              </div>
+            </figcaption>
+          </figure>
+        </div>
+      {% endfor %}
+    </div>
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <ul class="pagination ">
+            <li class="page-item disabled">
+              <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
+                <!-- Download SVG icon from http://tabler-icons.io/i/chevron-left -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M15 6l-6 6l6 6"></path></svg>
+                prev
+              </a>
+            </li>
+            <li class="page-item"><a class="page-link" href="#">1</a></li>
+            <li class="page-item active"><a class="page-link" href="#">2</a></li>
+            <li class="page-item"><a class="page-link" href="#">3</a></li>
+            <li class="page-item"><a class="page-link" href="#">4</a></li>
+            <li class="page-item"><a class="page-link" href="#">5</a></li>
+            <li class="page-item">
+              <a class="page-link" href="#">
+                next <!-- Download SVG icon from http://tabler-icons.io/i/chevron-right -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M9 6l6 6l-6 6"></path></svg>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block style %}
+  <style>
+    .figure {
+      width: 100%;
+    }
+
+    .figure-img {
+      margin-bottom: 0;
+      width: 100%;
+    }
+
+    .figure-caption {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      color: white;
+      padding: 10px 15px;
+    }
+  </style>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    // Note: must be single-quoted since Jinja inserts JSON with double quotes
+    let personsJson = '{{ persons | tojson }}';
+    let persons = JSON.parse(personsJson) || [];
+
+    // Handle Face Tagging Form: check if the person already exists, if not add a new person, and add it to the face
+    document.querySelectorAll('.tag-person-form').forEach(form => {
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const formData = new FormData(event.target);
+        const person = formData.get('person');
+        let person_id = null;
+
+        // Prevent empty input
+        if (!person || person.trim() === ''){
+          return;
+        }
+
+        // If we don't know the person yet, add it to the database first
+        const personExists = persons.find((p) => p.name.toLowerCase() === person.toLowerCase());
+
+        if (!personExists) {
+          const person_response = await fetch('/person', {
+            method: 'POST',
+            body: JSON.stringify({ name: person }),
+            headers: { 'Content-Type': 'application/json' }
+          });
+
+          if (person_response.status === 201) {
+            data = await person_response.json();
+            person_id = data.id;
+
+            // Add the new person to the persons list for local lookup
+            persons.push({ id: person_id, name: person });
+            document.getElementById('persons').innerHTML += `<option value="${person}"></option>`;
+          } else {
+            console.log('Error creating person', await person_response.text());
+            // TODO: Show error message to user
+          }
+        // Or fetch it locally if we can find it in the persons list
+        } else {
+          person_id = personExists.id;
+        }
+
+        // Update the Face record with the defined person_id
+        const faceId = formData.get('face_id');
+        const face_response = await fetch(`/face/${faceId}`, {
+          method: 'POST',
+          body: JSON.stringify({ person_id: person_id }),
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (face_response.status === 200) {
+          console.log(`Face ${faceId} updated successfully with Person ID ${person_id}`)
+          // Hide the face container after tagging
+          parent = event.explicitOriginalTarget.parentElement.closest('.face-container').style.display = 'none';
+        } else {
+          console.log('Error updating face person_id', await face_response.text());
+          // TODO: Show error message to user
+        }
+      })
+    });
+  </script>
+{% endblock %}
