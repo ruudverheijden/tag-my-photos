@@ -9,6 +9,7 @@ from sqlalchemy import create_engine, select, outerjoin
 from ..utils.tables import faces as faces_table
 from ..utils.tables import files as files_table
 from ..utils.tables import persons as persons_table
+from ..utils.tables import clusters as clusters_table
 
 load_dotenv()  # Inject environment variables from .env during development
 
@@ -64,6 +65,43 @@ def faces():
         "faces_overview.html", faces=data_faces, persons=data_persons
     )
 
+@app.route("/clusters")
+def clusters():
+    """
+    Show an overview of all clusters in the database
+    """
+    db_engine = create_engine("sqlite:///" + os.environ["DATABASE_PATH"])
+    with db_engine.connect() as conn:
+        # Fetch all clusters
+        # TODO: add pagination
+        query_clusters = (
+            select(
+                clusters_table.c.id,
+                clusters_table.c.cluster_id,
+                clusters_table.c.face_id,
+                faces_table.c.file_id,
+                faces_table.c.thumbnail_filename
+            ).join(
+                faces_table, clusters_table.c.face_id == faces_table.c.id
+            ).order_by(clusters_table.c.cluster_id)
+        )
+        result_clusters = conn.execute(query_clusters)
+        
+        data_clusters = [
+            {
+                "id": row.id,
+                "cluster_id": row.cluster_id,
+                "face_id": row.face_id,
+                "file_id": row.file_id,
+                "thumbnail_path": "/thumbnail/" + row.thumbnail_filename
+            }
+            for row in result_clusters
+        ]
+        print(data_clusters)
+        conn.close()
+    return render_template(
+        "clusters_overview.html", clusters=data_clusters
+    )
 
 @app.route("/thumbnail/<path:filename>")
 def thumbnail(filename):

@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="container">
+    <div class="row">
+      {% for cluster in clusters %}
+        <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12 face-container">
+          <figure class="figure rounded overflow-hidden position-relative"> 
+            <a href="{{ url_for('file', file_id=cluster.file_id) }}">
+              <img src="{{ cluster.thumbnail_path }}" class="figure-img img-fluid">
+            </a>
+            <figcaption class="figure-caption">
+              <form class="tag-person-form">
+                  <div class="row g-2">
+                    <div class="col">
+                      {{ cluster.cluster_id }} - {{ cluster.face_id }}
+                      <input name="face_id" type="hidden" value="{{ cluster.face_id }}">
+                    </div>
+                    <div class="col-auto">
+                      <input type="submit" class="btn" value="Save" />
+                    </div>
+                  </div>
+              </form>
+            </figcaption>
+          </figure>
+        </div>
+      {% endfor %}
+    </div>
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <ul class="pagination ">
+            <li class="page-item disabled">
+              <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
+                <!-- Download SVG icon from http://tabler-icons.io/i/chevron-left -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M15 6l-6 6l6 6"></path></svg>
+                prev
+              </a>
+            </li>
+            <li class="page-item"><a class="page-link" href="#">1</a></li>
+            <li class="page-item active"><a class="page-link" href="#">2</a></li>
+            <li class="page-item"><a class="page-link" href="#">3</a></li>
+            <li class="page-item"><a class="page-link" href="#">4</a></li>
+            <li class="page-item"><a class="page-link" href="#">5</a></li>
+            <li class="page-item">
+              <a class="page-link" href="#">
+                next <!-- Download SVG icon from http://tabler-icons.io/i/chevron-right -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M9 6l6 6l-6 6"></path></svg>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block style %}
+  <style>
+    .figure {
+      width: 100%;
+    }
+
+    .figure-img {
+      margin-bottom: 0;
+      width: 100%;
+    }
+
+    .figure-caption {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      color: white;
+      padding: 10px 15px;
+    }
+  </style>
+{% endblock %}
