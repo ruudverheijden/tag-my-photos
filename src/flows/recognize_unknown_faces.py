@@ -21,7 +21,7 @@ SIMILAR_FACES_RELATIVE_TO_MIN_DISTANCE = 0.10
 # Maximum number of similar faces to consider, higher numbers leads to more db queries
 MAX_SIMILAR_FACES = 3
 # Threshold of the maximum distance value for clustering unknown faces together as being the likely the same person, a higher value will result is more false positives, while a lower value clusters less unknown faces
-ASSUME_SAME_PERSON_THRESHOLD = 20
+ASSUME_SAME_PERSON_THRESHOLD = 10
 
 
 def find_nearest_neighbors(

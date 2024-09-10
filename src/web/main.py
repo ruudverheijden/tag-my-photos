@@ -76,7 +76,6 @@ def clusters():
         # TODO: add pagination
         query_clusters = (
             select(
-                clusters_table.c.id,
                 clusters_table.c.cluster_id,
                 clusters_table.c.face_id,
                 faces_table.c.file_id,
@@ -87,16 +86,17 @@ def clusters():
         )
         result_clusters = conn.execute(query_clusters)
         
-        data_clusters = [
-            {
-                "id": row.id,
-                "cluster_id": row.cluster_id,
+        # Create a dictionary to group rows by cluster_id
+        data_clusters = dict()
+
+        # Iterate over the rows and append them to the appropriate group
+        for row in result_clusters:
+            # Use setdefault to initialize the list if the key does not exist
+            data_clusters.setdefault(str(row.cluster_id), []).append({
                 "face_id": row.face_id,
                 "file_id": row.file_id,
                 "thumbnail_path": "/thumbnail/" + row.thumbnail_filename
-            }
-            for row in result_clusters
-        ]
+            })
         print(data_clusters)
         conn.close()
     return render_template(
