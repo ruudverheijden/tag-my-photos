@@ -6,7 +6,7 @@
       {% for face in faces %}
         <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12 face-container">
           <figure class="figure rounded overflow-hidden position-relative"> 
-            <a href="{{ url_for('file', file_id=face.file_id) }}">
+            <a href="{{ url_for('files.get_file', file_id=face.file_id) }}">
               <img src="{{ face.thumbnail_path }}" class="figure-img img-fluid">
             </a>
             <figcaption class="figure-caption">
