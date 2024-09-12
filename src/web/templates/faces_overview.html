@@ -105,7 +105,7 @@
         const personExists = persons.find((p) => p.name.toLowerCase() === person.toLowerCase());
 
         if (!personExists) {
-          const person_response = await fetch('/person', {
+          const person_response = await fetch('/persons', {
             method: 'POST',
             body: JSON.stringify({ name: person }),
             headers: { 'Content-Type': 'application/json' }
@@ -129,7 +129,7 @@
 
         // Update the Face record with the defined person_id
         const faceId = formData.get('face_id');
-        const face_response = await fetch(`/face/${faceId}`, {
+        const face_response = await fetch(`/faces/${faceId}`, {
           method: 'POST',
           body: JSON.stringify({ person_id: person_id }),
           headers: { 'Content-Type': 'application/json' }
