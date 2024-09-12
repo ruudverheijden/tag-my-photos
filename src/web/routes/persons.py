@@ -7,7 +7,7 @@ from src.utils.tables import faces as faces_table, persons as persons_table
 
 blueprint = Blueprint('persons', __name__, url_prefix='/persons')
 
-@blueprint.route("/", methods=["GET"])
+@blueprint.route("/")
 def index():
     """
     Persons overview page
@@ -41,6 +41,43 @@ def index():
         conn.close()
 
     return render_template("persons_overview.html", persons=data_persons)
+
+@blueprint.route("/<int:person_id>")
+def get_person(person_id):
+    """
+    Person page with all photos of this person
+    """
+    db_engine = create_engine("sqlite:///" + os.environ["DATABASE_PATH"])
+    with db_engine.connect() as conn:
+        query_faces = select(
+            faces_table.c.id,
+            faces_table.c.file_id,
+            faces_table.c.thumbnail_filename,
+            faces_table.c.facial_area_top,
+            faces_table.c.facial_area_left,
+            faces_table.c.facial_area_width,
+            faces_table.c.facial_area_height,
+        ).where(faces_table.c.person_id == person_id)
+        
+        query_persons = select(
+            persons_table.c.name
+        ).where(persons_table.c.id == person_id)
+
+        result_faces = conn.execute(query_faces)
+        result_persons = conn.execute(query_persons).fetchone()
+        
+        data_faces = [{
+            "id": row.id,
+            "file_id": row.file_id,
+            "thumbnail_path": "/files/thumbnails/" + row.thumbnail_filename,
+            "facial_area_top": row.facial_area_top,
+            "facial_area_left": row.facial_area_left,
+            "facial_area_width": row.facial_area_width,
+            "facial_area_height": row.facial_area_height
+        } for row in result_faces]
+        conn.close()
+
+    return render_template("person.html", name=result_persons.name, faces=data_faces)
 
 
 @blueprint.route("/", methods=["POST"])

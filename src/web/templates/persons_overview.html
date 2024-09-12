@@ -6,7 +6,7 @@
       {% for person in persons %}
         <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12 face-container">
           <figure class="figure rounded overflow-hidden position-relative"> 
-            <a href="">
+            <a href="{{ url_for('persons.get_person', person_id=person.id) }}">
               <img src="{{ person.thumbnail_path }}" class="figure-img img-fluid">
             </a>
             <figcaption class="figure-caption">
