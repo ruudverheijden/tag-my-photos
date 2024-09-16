@@ -7,6 +7,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from prefect import flow, task
 from sqlalchemy import Engine, create_engine, insert
+from exiftool import ExifToolHelper
 
 from ..utils.tables import files as files_table
 
@@ -58,6 +59,17 @@ def calculate_file_hash(filepath: str) -> str:
 
 
 @task()
+def get_file_exif_tags(filepath: str) -> str:
+    """
+    Extract EXIF tags from the file
+    """
+    with ExifToolHelper() as et:
+        for d in et.get_metadata(filepath):
+            for k, v in d.items():
+                print(f"Dict: {k} = {v}")
+
+
+@task()
 def store_metadata(
     db_engine: Engine, filepath: str, file_hash: str, last_updated: float
 ) -> str:
@@ -91,6 +103,8 @@ def parse_modified_files():
     db_engine = create_engine("sqlite:///" + os.environ["DATABASE_PATH"])
 
     for filepath in filepaths:
+        exif_tags = get_file_exif_tags(filepath)
+        
         store_metadata(
             db_engine,
             filepath,

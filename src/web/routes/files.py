@@ -2,8 +2,8 @@
 import os
 
 from flask import Blueprint, render_template, send_from_directory
-from sqlalchemy import create_engine, select
-from src.utils.tables import files as files_table
+from sqlalchemy import create_engine, select, outerjoin
+from src.utils.tables import files as files_table, faces as faces_table
 
 blueprint = Blueprint("files", __name__, url_prefix='/files')
 
@@ -14,18 +14,43 @@ def get_file(file_id):
     """
     db_engine = create_engine("sqlite:///" + os.environ["DATABASE_PATH"])
     with db_engine.connect() as conn:
-        query = select(files_table.c.thumbnail_filename).where(
-            files_table.c.id == file_id
-        )
-        result = conn.execute(query)
-        row = result.fetchone()
+        query_file = select(
+            files_table.c.id,
+            files_table.c.path,
+            files_table.c.thumbnail_filename,
+            files_table.c.last_updated,
+            files_table.c.contains_face
+        ).where(files_table.c.id == file_id)
+        
+        query_faces = select(
+            faces_table.c.id,
+            faces_table.c.facial_area_top,
+            faces_table.c.facial_area_left,
+            faces_table.c.facial_area_width,
+            faces_table.c.facial_area_height
+        ).where(faces_table.c.file_id == file_id)
+
+        result_file = conn.execute(query_file).fetchone()
+        result_faces = conn.execute(query_faces)
+        data_faces = [{
+            "id": row.id,
+            "facial_area_top": row.facial_area_top,
+            "facial_area_left": row.facial_area_left,
+            "facial_area_width": row.facial_area_width,
+            "facial_area_height": row.facial_area_height
+        } for row in result_faces]
         conn.close()
 
-    if row is None:
+    if result_file is None:
         return "File not found", 404
     else:
         return render_template(
-            "file.html", file_path="/files/thumbnails/" + row.thumbnail_filename
+            "file.html",
+            file_id = result_file.id,
+            file_path = result_file.path,
+            thumbnail_path = "/files/thumbnails/" + result_file.thumbnail_filename,
+            last_updated = result_file.last_updated,
+            faces = data_faces
         )
 
 
