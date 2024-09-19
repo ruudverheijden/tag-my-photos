@@ -3,10 +3,10 @@
 from prefect import flow
 
 from . import (
-    generate_embeddings,
-    generate_thumbnails,
     initialize_database,
     parse_modified_files,
+    generate_embeddings,
+    generate_thumbnails
 )
 
 

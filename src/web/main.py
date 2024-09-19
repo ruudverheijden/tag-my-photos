@@ -1,6 +1,6 @@
 """Runs the Flask based web application"""
 
-from flask import Flask
+from flask import Flask, render_template
 
 from .routes.faces import blueprint as faces_bp
 from .routes.clusters import blueprint as clusters_bp
@@ -16,6 +16,13 @@ app.register_blueprint(clusters_bp)
 app.register_blueprint(files_bp)
 app.register_blueprint(persons_bp)
 app.register_blueprint(flows_bp)
+
+@app.route("/")
+def index():
+    """
+    Index page
+    """
+    return render_template("base.html")
 
 if __name__ == "__main__":
     app.run(debug=True)
