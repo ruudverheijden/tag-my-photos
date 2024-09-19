@@ -62,8 +62,7 @@ def update_face(face_id):
         return "Invalid request, must be JSON", 415
 
     if (
-        data["person_id"]
-        and isinstance(data["person_id"], int)
+        isinstance(data["person_id"], int)
         and face_id
         and isinstance(face_id, int)
     ):
