@@ -16,7 +16,7 @@ load_dotenv()  # Inject environment variables from .env during development
 @flow()
 def write_tags():
     """
-    Find tagged persons in the database and write them as XMP tags to the original source files
+    Find tagged persons in the database and write them in the XMP Subject to the original source files
     """
     db_engine = create_engine("sqlite:///" + os.environ["DATABASE_PATH"])
     

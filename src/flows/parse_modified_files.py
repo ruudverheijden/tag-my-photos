@@ -61,10 +61,10 @@ def calculate_file_hash(filepath: str) -> str:
 @task()
 def get_file_exif_tags(filepath: str) -> str:
     """
-    Extract EXIF tags from the file
+    Read XMP Subject tag from the file to see if it already contains person tags
     """
     with ExifToolHelper() as et:
-        for d in et.get_metadata(filepath):
+        for d in et.get_tags(filepath, tags=["Subject"]):
             for k, v in d.items():
                 print(f"Dict: {k} = {v}")
 
@@ -78,15 +78,22 @@ def store_metadata(
     """
     with db_engine.connect() as conn:
         # Check if the file already exists in the database
-        exists = conn.execute(
+        file_exists = conn.execute(
             files_table.select().where(files_table.c.path == filepath)
-        ).fetchone()
+        ).first()
 
-        if not exists:
+        if file_exists is None:
             conn.execute(
                 insert(files_table).values(
                     path=filepath, hash=file_hash, last_updated=last_updated
                 )
+            )
+            conn.commit()
+        elif file_exists.hash != file_hash:
+            conn.execute(
+                files_table.update()
+                .where(files_table.c.path == filepath)
+                .values(hash=file_hash, last_updated=last_updated)
             )
             conn.commit()
 
